@@ -1,0 +1,358 @@
+#!/bin/bash
+#Copyright 2018 Maxime Jay-Allemand
+#    This file is part of Statmax.
+
+#    Statmax is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+
+#    Statmax is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+
+#    You should have received a copy of the GNU General Public License
+#    along with Statmax.  If not, see <https://www.gnu.org/licenses/>.
+
+
+
+pathressource=$(dirname $0)"/lib/"
+
+#cas d'une installation sur le système
+if [ -e /usr/local/bin/matmax ]
+then
+    $pathressource=/usr/local/lib/statmax/
+fi
+
+
+if [[ -z $1 ]]
+then
+    echo "Statmax is a tiny to copute statistical criteria on columns datafiles."
+    echo "Statmax is written with awk and use bash as a wrapper."
+    echo "Statmax is released under the GNU licence"
+    echo "Type statmax --help to see options"
+    exit 0  
+fi
+
+#Liste des arguments
+opt=""
+for i in "$@"
+do
+#echo $i
+case $i in
+    -m=*|--mode=*)
+    mode="${i#*=}"
+    shift # past argument=valuecd AIGA2018/aiga_developpements/src/fortran/GRD_c/grdtest/
+    #Ici shift ne sert pas à grand chose puisque l'on fait une boucle. Shift sert à décaler les argument (à chaque shift $1 est supprimer et $2 prend la place de $1). Ca sert lorsque l'on a un agrument type -fichier "toto"
+    ;;
+    -f=*|--file=*)
+    file="${i#*=}"
+    shift # past argument=value
+    ;;
+    -c=*|--column=*)
+    column="${i#*=}"
+    shift # past argument=value
+    opt=$opt" -v column="$column
+    ;;
+    --nan=*)
+    nan=${i#--}
+    shift # past argument with no value
+    opt=$opt" -v "$nan
+    ;;
+    --skipline=*)
+    skipline=${i#--}
+    shift # past argument with no value
+    opt=$opt" -v "$skipline
+    ;;
+    --qvalue=*)
+    qvalue=${i#--}
+    shift # past argument with no value
+    opt=$opt" -v "$qvalue
+    ;;
+    --colsim=*)
+    colsim=${i#--}
+    shift # past argument with no value
+    opt=$opt" -v "$colsim
+    ;;
+    --colobs=*)
+    colobs=${i#--}
+    shift # past argument with no value
+    opt=$opt" -v "$colobs
+    ;;
+    --outputfmt=*)
+    outputfmt=${i#--}
+    shift # past argument with no value
+    opt=$opt" -v "$outputfmt
+    ;;
+    --label=*)
+    label=${i#--}
+    shift # past argument with no value
+    opt=$opt" -v "$label
+    ;;
+    --fs=*)
+    fs=${i#*=}
+    shift # past argument with no value
+    opt=$opt" -F "$fs
+    ;;
+    --awk=*)
+    awkparam=${i#*=}
+    shift
+    opt=$opt" -v "$awkparam
+    ;;
+    --help)
+        echo "Liste des options disponibles :"
+        echo "-m=*|--mode=* :"
+        echo "  * = Action à exécuter dans la liste suivante (défault checkmat) :"
+        echo "      stats : statistiques simples d'une colonne : nbrecords ; nbvalidrecord ; min ; max ; sum ; mean ; variance ; median ; quantile"
+        echo "      min : valeur minimum de la column"
+        echo "      max : valeur max de la column"
+        echo "      sum : sommme d'une colonne"
+        echo "      mean : moyenne d'une colonne"
+        echo "      deviation : variance d'une colonne"
+        echo "      median : medianne d'une colonne"
+        echo "      quantile : quantile90 d'une colonne"
+        echo "      invquantile : pourcentage inférieur à une valeur dans une colonne"
+        echo "      nash : critère de nash entre 2 colones. Par default on suppose la colonne des obs avant la colonne des sim"
+        echo "      se : résidus entre 2 colonnes"
+        echo "      mse : moyenne des résidus entre 2 colonnes"
+        echo "      rmse : racine carré des résidus  entre 2 colonnes"
+        echo "      kge : calcul du critère kge entre 2 colonnes"
+        echo ""
+        echo "-f=*|--file=*"
+        echo "  * = nom du fichier à traiter"
+        echo ""
+        echo "-c=*|--column=*"
+        echo "  * = numéro de la colonne à traiter"
+        echo ""
+        echo "--nan=*"
+        echo "  * = valeur du not a number"
+        echo ""
+        echo "--skipline=*"
+        echo "  * = nombre de ligne à sauter en début de fichier"
+        echo ""
+        echo "--qvalue=*"
+        echo "  * = valeur du quantile à calculer"
+        echo ""
+        echo "--facteur=*"
+        echo "  * = Facteur multiplicateur des colonnes lors du calcul du rmse,mse et se (possibilité de normer les grandeur)"
+        echo ""
+        echo "--colsim=*"
+        echo "  * = colonne des données simulées"
+        echo ""
+        echo "--colobs=*"
+        echo "  * = colonne des données observées"
+        echo ""
+        echo "--outputfmt=*"
+        echo "  * = Formatage des résultats en sortie parmis les choix suivant :"
+        echo "      expr : renvoie sous la forme res1=value ; res2=value2 ..."
+        echo "      head : ecrit une entête suivis des données (2 lignes)"
+        echo "      data : ecrit seulement les données séparées par des espaces : value1 value2 ..."
+        echo ""
+        echo "--label=*"
+        echo "  * = Etiquette la série de données par un prefixe (stats)"
+        echo ""
+        echo "--fs=*"
+        echo "  * = Caractère de séparation des colonnes"
+        echo ""
+        echo "--awk=*"
+        echo "  * = pass any awk parameters. example : --awk='RS=RECORDSEPARATOR'"
+        exit 0
+    ;;
+    *)
+        if [ -e $i ] && [ -f $i ]
+        then
+            #It likely an input file
+            file=$i
+        else
+            echo "Unknown parameter" ${i}
+            echo "type --help to show available options"
+            exit 1
+        fi
+    ;;
+esac
+done
+
+
+
+#echo $mode
+#echo $file
+#echo $opt
+
+if [ -z $mode ]
+    then
+       #si mode est abscent, on print les stats (default)
+       mode="stats"
+fi
+
+
+case $mode in
+    min)
+	    #echo "Calcul du min"
+	    opt=$opt" -v minmax=min "
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}min_max.awk $file 
+	;;
+	max)
+	    #echo "Calcul du max"
+	    opt=$opt" -v minmax=max "
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}min_max.awk $file 
+	;;
+    sum)
+	    #echo "Calcul de la somme"
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}sum.awk $file 
+	;;
+	mean)
+	    #echo "Calcul de la moyenne"
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}mean.awk $file 
+	;;
+	deviation)
+	    #echo "Calcul de l'écart-type"
+	    opt=$opt" -v type_var=deviation "
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}deviation.awk $file 
+	;;
+	variance)
+	    #echo "Calcul de la variance"
+	    opt=$opt" -v type_var=variance "
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}deviation.awk $file 
+	;;
+	median)
+	    #echo "Calcul de la median"
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}median.awk $file 
+	;;
+	invquantile)
+	    #echo "Calcul de la fraciton de la distribution inférieur à qvalue"
+	    opt=$opt" -v invqsearch=true "
+	    #requiere file, colsim et colobs
+	    if [ -z $qvalue ]
+        then
+            echo "Oups ! missing input parameter qvalue"
+	        exit 1
+	    fi
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}quantile.awk $file 
+	;;
+	quantile)
+	    #echo "Calcul du quantile"
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}quantile.awk $file 
+	;;
+	stats)
+	    #echo "Calcul des statistiques"
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}stats.awk $file 
+	;;
+	nash)
+	    #echo "Calcul du nash"
+	    #requiere file, colsim et colobs
+	    if [ -z $colsim ] || [ -z $colobs ]
+        then
+            opt=$opt" -v calculbycolumns=1 "
+	    fi
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}nash.awk $file 
+	;;
+	se)
+	    #echo "Calcul des résidus se"
+	    #requiere file, colsim et colobs
+#	    if [ -z $colobs ]
+#        then
+#            echo "Oups ! missing input parameter colobs"
+#	        exit 1
+#	    fi
+#	    if [ -z $colsim ]
+#        then
+#            echo "Oups ! missing input parameter colobs"
+#	        exit 1
+#	    fi
+	     if [ -z $colsim ] || [ -z $colobs ]
+        then
+            opt=$opt" -v calculbycolumns=1 "
+	    fi
+	    opt=$opt" -v opt_res=se "
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}residuals.awk $file 
+	;;
+	mse)
+	    #echo "Calcul de la moyenne des résidus mse"
+	    #requiere file, colsim et colobs
+	     if [ -z $colsim ] || [ -z $colobs ]
+        then
+            opt=$opt" -v calculbycolumns=1 "
+	    fi
+	    opt=$opt" -v opt_res=mse "
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}residuals.awk $file 
+	;;
+	rmse)
+	    #echo "Calcul de la racine de la moyenne des résidus rmse"
+	    #requiere file, colsim et colobs
+#	    if [ -z $colobs ]
+#        then
+#            echo "Oups ! missing input parameter colobs"
+#	        exit 1
+#	    fi
+#	    if [ -z $colsim ]
+#        then
+#            echo "Oups ! missing input parameter colobs"
+#	        exit 1
+#	    fi
+	     if [ -z $colsim ] || [ -z $colobs ]
+        then
+            opt=$opt" -v calculbycolumns=1 "
+	    fi
+	    opt=$opt" -v opt_res=rmse "
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}residuals.awk $file 
+	;;
+	kge)
+	    #echo "Calcul du kge"
+	    #requiere file, colsim et colobs
+	    if [ -z $colsim ] || [ -z $colobs ]
+        then
+            opt=$opt" -v calculbycolumns=1 "
+	    fi
+	    opt=$opt" -v kge_mode=kge "
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}kge.awk $file 
+	;;
+	pearson)
+	    #echo "Calcul du pearson"
+	    #requiere file, colsim et colobs
+	    if [ -z $colsim ] || [ -z $colobs ]
+        then
+            opt=$opt" -v calculbycolumns=1 "
+	    fi
+	    opt=$opt" -v kge_mode=pearson "
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}kge.awk $file 
+	;;
+	rmu)
+	    #echo "Calcul du rapport des moyenne rmu"
+	    #requiere file, colsim et colobs
+	    if [ -z $colsim ] || [ -z $colobs ]
+        then
+            opt=$opt" -v calculbycolumns=1 "
+	    fi
+	    opt=$opt" -v kge_mode=rmu "
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}kge.awk $file 
+	;;
+	rvar)
+	    #echo "Calcul du rapport des variance rvar"
+	    #requiere file, colsim et colobs
+	    if [ -z $colsim ] || [ -z $colobs ]
+        then
+            opt=$opt" -v calculbycolumns=1 "
+	    fi
+	    opt=$opt" -v kge_mode=rvar "
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}kge.awk $file 
+	;;
+	kge_decompo)
+	    #echo 'Calcul du kge_decomposition : renvoie "KGE pearson alpha beta"'
+	    #requiere file, colsim et colobs
+	    if [ -z $colsim ] || [ -z $colobs ]
+        then
+            opt=$opt" -v calculbycolumns=1 "
+	    fi
+	    opt=$opt" -v kge_mode=kge_decompo "
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}kge.awk $file 
+	;;
+	flip)
+	    #echo "Calcul de la moyenne"
+	    awk $opt -f ${pathressource}func.awk -f ${pathressource}flip.awk $file 
+	;;
+	*)
+	    echo "--mode="$mode" : ??? Sorry, this statistic doesn't still exist. But you can code it !"
+	;;
+esac
+

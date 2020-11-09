@@ -1,0 +1,153 @@
+#!/bin/bash
+#Copyright 2018 Maxime Jay-Allemand
+#    This file is part of Loopmax.
+
+#    Loopmax is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+
+#    Loopmax is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+
+#    You should have received a copy of the GNU General Public License
+#    along with Loopmax.  If not, see <https://www.gnu.org/licenses/>.
+
+
+#Simple program to trigger inside a loop a program
+
+
+#Default values :
+itermin=1
+itermax=1
+iterarray=""
+cmd=""
+para=""
+
+if [[ -z $1 ]]
+then
+    echo "Loopmax is a tiny scrip that aim to help to perform a loop in bash !"
+    echo "Loopmax is released under the GNU licence"
+    echo "Type Loopmax -help to see options"
+    exit 0  
+fi
+
+echo $1
+#loop over the arguments
+for i in "$@"
+do
+    case $i in
+        -m=*|--mode=*)
+            mode="${i#*=}"
+            shift 
+        ;;
+        --itermax=*)
+            itermax="${i#*=}"
+            shift 
+        ;;
+        --itermin=*)
+            itermin="${i#*=}"
+            shift 
+        ;;
+        --iterarray=*)
+            iterarray="${i#*=}"
+            shift 
+        ;;
+        --iterfile=*)
+            iterfile="${i#*=}"
+            shift 
+        ;;
+        --cmd=*)
+            cmd="${i#*=}"
+            shift
+        ;;
+        --script=*)
+            script="${i#*=}"
+            shift
+        ;;
+        --parallel)
+            parallel="${i#-}"
+            shift
+        ;;
+        --help)
+            echo "Welcome to loopmax"
+            echo "Simply run your code multiple times. This program perform a bash loop and eval a commande line."
+            echo "  Mode Options are -m=*"
+            echo "      iternumber : loop over integer"
+            echo "      iterarray : loop over words in a string"
+            echo "      iterfile : loop over lines in a file"
+            echo ""
+            echo "  Other options :"
+            echo "      -itermax=final number of iteration : default is 1"
+            echo "      -itermin=start number of iteration : default is 1"
+            echo "      -iterarry='string1 string2...' : loop over ellement of array string1 string2..."
+            echo "      -iterfile=filename : name of the file that contains a list of string" 
+            echo "      -parallel : run your code in parallel (can be very slow if you command is fast !)"
+            echo "      -cmd='your command' where !@ in you command refer to the iterative elements of the loop."
+            echo ""
+            echo "example : loopmax -m=iterfile -iterfile=filename 'matmax -m=addmat -f1=filetmp -f2=!@ >> filetmp2 ; mv filetmp2 filetmp ;' will cumul in filetmp all the matrix listed in filename."
+            exit 0
+        ;;
+        *)
+            if [ -e $i ] && [ -f $i ]
+            then
+                #It likely an input file
+                script=$i
+            else
+                #It is likely a command line
+                cmd=$i
+            fi
+        ;;
+    esac
+done
+
+ecmd=""
+
+#Add & to run in parallel the sequence. This can be a disaster in term of performance if the prog is very fast to run.
+if [ -n "${parallel}" ]
+    then
+        para="&"
+fi
+
+#Préparation de la ligne de commande
+if [ -n "${script}" ]
+then
+    ecmd0=$(more $script)
+    ecmd=${ecmd0//\#\@/\$\{word\}}
+    echo $ecmd
+else 
+    ecmd=${cmd//\#\@/\$\{word\}}
+    echo $ecmd 
+fi
+
+
+case $mode in
+    iternumber)
+        #iterative loop on a range of integer
+        for ((word = ${itermin} ; word <= ${itermax} ; word++ ));
+        do 
+            eval $ecmd $para
+        done
+    ;;
+    
+    iterarray)
+        #Loop on word in array
+        for word in $iterarray
+        do 
+            eval $ecmd $para
+        done
+    ;;
+    
+    iterfile)
+        #Loop on word in array 
+        for word in $(cat $iterfile)
+        do 
+            eval $ecmd $para
+        done
+    ;;  
+esac
+
+wait
+
