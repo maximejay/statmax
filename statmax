@@ -28,8 +28,8 @@ fi
 
 if [[ -z $1 ]]
 then
-    echo "Statmax is a tiny to copute statistical criteria on columns datafiles."
-    echo "Statmax is written with awk and use bash as a wrapper."
+    echo "Statmax is a progam to process brut text datafile and compute statistical criteria based on columns."
+    echo "Statmax use the awk language. A bash wrapper of the awk functions enhance the usability of this library."
     echo "Statmax is released under the GNU licence"
     echo "Type statmax --help to see options"
     exit 0  
@@ -37,72 +37,82 @@ fi
 
 #Liste des arguments
 opt=""
-for i in "$@"
+until [ $# = 0 ]
 do
-#echo $i
-case $i in
-    -m=*|--mode=*)
-    mode="${i#*=}"
-    shift # past argument=valuecd AIGA2018/aiga_developpements/src/fortran/GRD_c/grdtest/
-    #Ici shift ne sert pas à grand chose puisque l'on fait une boucle. Shift sert à décaler les argument (à chaque shift $1 est supprimer et $2 prend la place de $1). Ca sert lorsque l'on a un agrument type -fichier "toto"
+case $1 in
+    -m|--mode)
+    shift
+    mode="${1}"
+    shift
     ;;
-    -f=*|--file=*)
-    file="${i#*=}"
-    shift # past argument=value
+    -f|--file)
+    shift
+    file="${1}"
+    shift 
     ;;
-    -c=*|--column=*)
-    column="${i#*=}"
-    shift # past argument=value
+    -c|--column)
+    shift
+    column="${1}"
+    shift 
     opt=$opt" -v column="$column
     ;;
-    --nan=*)
-    nan=${i#--}
-    shift # past argument with no value
+    --nan)
+    shift
+    nan=${1}
+    shift 
     opt=$opt" -v "$nan
     ;;
-    --skipline=*)
-    skipline=${i#--}
-    shift # past argument with no value
+    --skipline)
+    shift
+    skipline=${1}
+    shift
     opt=$opt" -v "$skipline
     ;;
-    --qvalue=*)
-    qvalue=${i#--}
-    shift # past argument with no value
+    --qvalue)
+    shift
+    qvalue=${1}
+    shift
     opt=$opt" -v "$qvalue
     ;;
-    --colsim=*)
-    colsim=${i#--}
-    shift # past argument with no value
+    --colsim)
+    shift
+    colsim=${1}
+    shift
     opt=$opt" -v "$colsim
     ;;
-    --colobs=*)
-    colobs=${i#--}
-    shift # past argument with no value
+    --colobs)
+    shift
+    colobs=${1}
+    shift
     opt=$opt" -v "$colobs
     ;;
-    --outputfmt=*)
-    outputfmt=${i#--}
-    shift # past argument with no value
+    --outputfmt)
+    shift
+    outputfmt=${1}
+    shift
     opt=$opt" -v "$outputfmt
     ;;
-    --label=*)
-    label=${i#--}
-    shift # past argument with no value
+    --label)
+    shift
+    label=${1}
+    shift
     opt=$opt" -v "$label
     ;;
-    --fs=*)
-    fs=${i#*=}
-    shift # past argument with no value
+    --fs)
+    shift
+    fs=${1}
+    shift
     opt=$opt" -F "$fs
     ;;
-    --awk=*)
+    --awk)
+    shift
     awkparam=${i#*=}
     shift
     opt=$opt" -v "$awkparam
     ;;
     --help)
         echo "Liste des options disponibles :"
-        echo "-m=*|--mode=* :"
+        echo "-m|--mode :"
         echo "  * = Action à exécuter dans la liste suivante (défault checkmat) :"
         echo "      stats : statistiques simples d'une colonne : nbrecords ; nbvalidrecord ; min ; max ; sum ; mean ; variance ; median ; quantile"
         echo "      min : valeur minimum de la column"
@@ -119,53 +129,54 @@ case $i in
         echo "      rmse : racine carré des résidus  entre 2 colonnes"
         echo "      kge : calcul du critère kge entre 2 colonnes"
         echo ""
-        echo "-f=*|--file=*"
+        echo "-f|--file"
         echo "  * = nom du fichier à traiter"
         echo ""
-        echo "-c=*|--column=*"
+        echo "-c|--column"
         echo "  * = numéro de la colonne à traiter"
         echo ""
-        echo "--nan=*"
+        echo "--nan"
         echo "  * = valeur du not a number"
         echo ""
-        echo "--skipline=*"
+        echo "--skipline"
         echo "  * = nombre de ligne à sauter en début de fichier"
         echo ""
-        echo "--qvalue=*"
+        echo "--qvalue"
         echo "  * = valeur du quantile à calculer"
         echo ""
-        echo "--facteur=*"
+        echo "--facteur"
         echo "  * = Facteur multiplicateur des colonnes lors du calcul du rmse,mse et se (possibilité de normer les grandeur)"
         echo ""
-        echo "--colsim=*"
+        echo "--colsim"
         echo "  * = colonne des données simulées"
         echo ""
-        echo "--colobs=*"
+        echo "--colobs"
         echo "  * = colonne des données observées"
         echo ""
-        echo "--outputfmt=*"
+        echo "--outputfmt"
         echo "  * = Formatage des résultats en sortie parmis les choix suivant :"
         echo "      expr : renvoie sous la forme res1=value ; res2=value2 ..."
         echo "      head : ecrit une entête suivis des données (2 lignes)"
         echo "      data : ecrit seulement les données séparées par des espaces : value1 value2 ..."
         echo ""
-        echo "--label=*"
+        echo "--label"
         echo "  * = Etiquette la série de données par un prefixe (stats)"
         echo ""
-        echo "--fs=*"
+        echo "--fs"
         echo "  * = Caractère de séparation des colonnes"
         echo ""
-        echo "--awk=*"
+        echo "--awk"
         echo "  * = pass any awk parameters. example : --awk='RS=RECORDSEPARATOR'"
         exit 0
     ;;
     *)
-        if [ -e $i ] && [ -f $i ]
+        if [ -e $1 ] && [ -f $1 ]
         then
             #It likely an input file
-            file=$i
+            file=$1
+            shift
         else
-            echo "Unknown parameter" ${i}
+            echo "Unknown parameter" ${1}
             echo "type --help to show available options"
             exit 1
         fi
@@ -183,6 +194,13 @@ if [ -z $mode ]
     then
        #si mode est abscent, on print les stats (default)
        mode="stats"
+fi
+
+if [ -z $file ]
+    then
+       #si file is empty, we exit
+       echo "Empty target ! use -f targeted_file"
+       exit 1
 fi
 
 

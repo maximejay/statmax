@@ -36,135 +36,159 @@ fi
 #Liste des arguments
 opt=""
 kfile=0
-for i in "$@"
+until [ $# = 0 ]
 do
-#echo $i
-case $i in
-    -m=*|--mode=*)
-    mode="${i#*=}"
-    shift # past argument=valuecd AIGA2018/aiga_developpements/src/fortran/GRD_c/grdtest/
+case $1 in
+    -m|--mode)
+    shift
+    mode="${1}"
+    shift
     ;;
-    -f1=*|--file1=*)
-    file1="${i#*=}"
-    shift # past argument=value
+    -f1|--file1)
+    shift
+    file1="${1}"
+    shift
     ;;
-    -f2=*|--file2=*)
-    file2="${i#*=}"
-    shift # past argument=value
+    -f2|--file2)
+    shift
+    file2="${1}"
+    shift
     ;;
-    --skipline=*)
-    skipline=${i#--}
-    shift # past argument with no value
+    --skipline)
+    shift
+    skipline=${1}
+    shift
     opt=$opt" -v "$skipline
-     ;;
-    --scalefactor=*)
-    scalefactor=${i#--}
-    shift # past argument with no value
+    ;;
+    --scalefactor)
+    shift
+    scalefactor=${1}
+    shift
     opt=$opt" -v "$scalefactor
-     ;;
-    --addscalaire=*)
-    addscalaire=${i#--}
-    shift # past argument with no value
+    ;;
+    --addscalaire)
+    shift
+    addscalaire=${1}
+    shift
     opt=$opt" -v "$addscalaire
     ;;
-    --scalefunction=*)
-    scalefunction=${i#--}
-    shift # past argument with no value
+    --scalefunction)
+    shift
+    scalefunction=${1}
+    shift
     opt=$opt" -v "$scalefunction
     ;;
-    --modecompmat=*)
-    modecompmat=${i#--}
-    shift # past argument with no value
+    --modecompmat)
+    shift
+    modecompmat=${1}
+    shift
     opt=$opt" -v "$modecompmat
     ;;
-    --xdim=*)
-    xdim=${i#--}
-    shift # past argument with no value
+    --xdim)
+    shift
+    xdim=${1}
+    shift
     opt=$opt" -v "$xdim
     ;;
-    --ydim=*)
-    ydim=${i#--}
-    shift # past argument with no value
+    --ydim)
+    shift
+    ydim=${1}
+    shift
     opt=$opt" -v "$ydim
     ;;
-    --cellsize=*)
-    cellsize=${i#--}
-    shift # past argument with no value
+    --cellsize)
+    shift
+    cellsize=${1}
+    shift
     opt=$opt" -v "$cellsize
     ;;
-    --xllcorner=*)
-    xllcorner=${i#--}
-    shift # past argument with no value
+    --xllcorner)
+    shift
+    xllcorner=${1}
+    shift
     opt=$opt" -v "$xllcorner
     ;;
-    --yllcorner=*)
-    yllcorner=${i#--}
-    shift # past argument with no value
+    --yllcorner)
+    shift
+    yllcorner=${1}
+    shift
     opt=$opt" -v "$yllcorner
     ;;
     --geomatrix)
+    shift
     geomatrix="geomatrix=1"
-    shift # past argument with no value
+    shift
     opt=$opt" -v "$geomatrix
     ;;
-    --xstart=*)
-    xstart=${i#--}
-    shift # past argument with no value
+    --xstart)
+    shift
+    xstart=${1}
+    shift
     opt=$opt" -v "$xstart
     ;;
-    --ystart=*)
-    ystart=${i#--}
-    shift # past argument with no value
+    --ystart)
+    shift
+    ystart=${1}
+    shift
     opt=$opt" -v "$ystart
     ;;
-    --minvalue=*)
-    minvalue=${i#--}
-    shift # past argument with no value
+    --minvalue)
+    shift
+    minvalue=${1}
+    shift
     opt=$opt" -v "$minvalue
     ;;
-    --maxvalue=*)
-    maxvalue=${i#--}
-    shift # past argument with no value
+    --maxvalue)
+    shift
+    maxvalue=${1}
+    shift
     opt=$opt" -v "$maxvalue
     ;;
-    --trunctype=*)
-    trunctype=${i#--}
-    shift # past argument with no value
+    --trunctype)
+    shift
+    trunctype=${1}
+    shift
     opt=$opt" -v "$trunctype
     ;;
-    --nan=*)
-    nan=${i#--}
-    shift # past argument with no value
+    --nan)
+    shift
+    nan=${1}
+    shift
     opt=$opt" -v "$nan
     ;;
-    --datablock=*)
-    datablock=${i#--}
-    shift # past argument with no value
+    --datablock)
+    shift
+    datablock=${1}
+    shift
     opt=$opt" -v "$datablock
     ;;
-    --lstart=*)
-    lstart=${i#--}
-    shift # past argument with no value
+    --lstart)
+    shift
+    lstart=${1}
+    shift
     opt=$opt" -v "$lstart
     ;;
-    --lend=*)
-    lend=${i#--}
-    shift # past argument with no value
+    --lend)
+    shift
+    lend=${1}
+    shift
     opt=$opt" -v "$lend
     ;;
-    --fs=*)
-    fs=${i#*=}
-    shift # past argument with no value
+    --fs)
+    shift
+    fs=${1}
+    shift
     opt=$opt" -F "$fs
     ;;
-    --awk=*)
-    awkparam=${i#*=}
+    --awk)
+    shift
+    awkparam=${1}
     shift
     opt=$opt" -v "$awkparam
     ;;
     --help)
         echo "Liste des options disponibles :"
-        echo "-m=*|--mode=* :"
+        echo "-m|--mode :"
         echo "	* = Action à exécuter dans la liste suivante (défault checkmat) :"
         echo "      flip : transpose le fichier d'entrée"
         echo "      diffmat : Différence entre 2 matrices : A-B"
@@ -188,77 +212,78 @@ case $i in
         echo "*"
         echo "	Une chaine de caratère seule sera considéré comme étant le chemin relatif ou absolu vers le fichier d'entrée"
         echo ""
-        echo "-f1=*|--file1=*"
+        echo "-f1|--file1"
         echo "  * = nom du fichier 1 à traiter"
         echo ""
-        echo "-f2=*|--file2=*"
+        echo "-f2|--file2"
         echo "	* = nom du fichier 2 à traiter"
         echo ""
-        echo "--skipline=*"
+        echo "--skipline"
         echo "	* = nombre de ligne à sauter en début de fichier"
         echo ""
-        echo "--scalefactor=*"
+        echo "--scalefactor"
         echo "	* = Mise à l echelle par un facteur multiplicateur"
         echo ""
-        echo "--addscalaire=*"
+        echo "--addscalaire"
         echo "	* = Mise à l echelle par un scalaire que l'on additionne"
         echo ""
-        echo "--scalefunction=*"
+        echo "--scalefunction"
         echo "	* = Mise à l echelle par une fonction : lineaire, exp, log, sqrt, power, abs"
         echo ""
-        echo "--modecompmat=*"
+        echo "--modecompmat"
         echo "	* = mode de comparaison du mode compmat : centereddiffmat,centeredfracmat,centeredrelativfracmat,centeredreductionfracmat"
         echo ""
-        echo "--xdim=*"
+        echo "--xdim"
         echo "	* = nombre de lignes"
         echo ""
-        echo "--ydim=*"
+        echo "--ydim"
         echo "	* = nombre de colonnes"
         echo ""
-        echo "--xstart=*"
+        echo "--xstart"
         echo "	* = numéro de lignes"
         echo ""
-        echo "--ystart=*"
+        echo "--ystart"
         echo "	* = numéro de colonnes"
         echo ""
-        echo "--lstart=*"
+        echo "--lstart"
         echo "  * = numéro de ligne de début pour cut"
         echo ""
-        echo "--lend=*"
+        echo "--lend"
         echo "  * = numéro de ligne de fin pour cut"
         echo ""
         echo ""
-        echo "--minvalue=*"
+        echo "--minvalue"
         echo "	* = truncate at min value"
         echo ""
-        echo "--maxvalue=*"
+        echo "--maxvalue"
         echo "	* = truncate at max value"
         echo ""
-        echo "--trunctype=*"
+        echo "--trunctype"
         echo "  * = way to tuncate the matrix among these two options :"
         echo "      [bounds] : by the bounded values"
         echo "      [nan] : by nan value."
-        echo "      Use --minvalue=* or --maxvalue=* as bounded value. If option [bounds], matrix will be toncated toward these minimum or a maximum values. If option [nan], vlues outside bounds will take the nan value. Use --nan=* to define the nan value"  
+        echo "      Use --minvalue or --maxvalue as bounded value. If option [bounds], matrix will be toncated toward these minimum or a maximum values. If option [nan], vlues outside bounds will take the nan value. Use --nan to define the nan value"  
         echo ""
-        echo "--nan=*"
+        echo "--nan"
         echo "  * = the nan value, by default it is set to NA."
         echo ""
-        echo "--datablock=*"
+        echo "--datablock"
         echo "  * = the Nht block of the file, by default it is set to NA and the file is splited. All blocks are succesively printed into new numbered files. By default block separators are blank lines. Each block correspond to one different record and the Awk record separator RS control this behavior. By default RS is set to RS= (empty). Thus each blank line are treated as a records separator. The records separator can be adjusted by passing the awk parameter RS. For instance, setting RS='\n' revert the records separator to the standard (i.e newline) and thus each line will be considered as 1 block !"
         echo ""
-        echo "--fs=*"
+        echo "--fs"
         echo "	* = caractère de séparation des colonnes"
         echo ""
-        echo "--awk=*"
+        echo "--awk"
         echo "  * = pass any awk parameters. example : --awk='RS=RECORDSEPARATOR'"
         exit 0
     ;;
     *)
-        if [ -e $i ] && [ -f $i ]
+        if [ -e $1 ] && [ -f $1 ]
         then
             kfile=$((kfile+1))
             #It likely input files
-            eval file$kfile=$i
+            eval file$kfile=$1
+            shift
         else
             echo "Unknown parameter or file does not exist : " ${i}
             echo "type --help to show available options"
@@ -271,7 +296,7 @@ done
 
 
 #echo $mode
-#echo $file
+#echo $file1
 #echo $opt
 
 if [ -z $mode ]
