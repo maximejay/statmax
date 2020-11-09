@@ -1,0 +1,2 @@
+# statmax
+Awk statistical library  
