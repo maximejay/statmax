@@ -191,16 +191,16 @@ done
 #echo $opt
 
 if [ -z $mode ]
-    then
-       #si mode est abscent, on print les stats (default)
-       mode="stats"
+then
+   #si mode est abscent, on print les stats (default)
+   mode="stats"
 fi
 
-if [ -z $file ]
-    then
-       #si file is empty, we exit
-       echo "Empty target ! use -f targeted_file"
-       exit 1
+if [ ! -e $file ] # test if we expect a file, else we pipe data !!
+then
+   #si file does not exist, we exit ! 
+   echo "Target file does not exist ! use -f targeted_file"
+   exit 1
 fi
 
 
